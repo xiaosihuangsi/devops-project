@@ -23,12 +23,15 @@ pipeline {
 
         stage('Push to Docker Hub') {
             steps {
+                withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
                 script {
-                    sh 'echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin'
-                    sh 'docker push $IMAGE_NAME:$IMAGE_TAG'
-                }
+                   sh 'echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin'
+                   sh 'docker push $IMAGE_NAME:$IMAGE_TAG'
             }
         }
+    }
+}
+
 
         stage('Deploy to Kubernetes') {
             steps {
