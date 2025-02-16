@@ -1,37 +1,30 @@
 pipeline {
     agent any
-    environment {
-        DOCKER_IMAGE = "my-app"
-    }
     stages {
         stage('Checkout') {
             steps {
                 git branch: 'main', url: 'https://github.com/xiaosihuangsi/devops-project.git'
             }
         }
-        stage('Build') {
+        stage('Build Docker Image') {
             steps {
-                script {
-                    sh 'echo "Building the project..."'
-                    sh 'docker build -t $DOCKER_IMAGE .'
+                sh 'docker build -t my-app:latest .'
+            }
+        }
+        stage('Push to AWS ECR') {
+            steps {
+                withAWS(credentials: 'aws-credentials', region: 'us-east-1') {
+                    sh 'aws ecr get-login-password | docker login --username AWS --password-stdin <your-aws-account>.dkr.ecr.us-east-1.amazonaws.com'
+                    sh 'docker tag my-app:latest <your-aws-account>.dkr.ecr.us-east-1.amazonaws.com/my-app:latest'
+                    sh 'docker push <your-aws-account>.dkr.ecr.us-east-1.amazonaws.com/my-app:latest'
                 }
             }
         }
-        stage('Test') {
+        stage('Deploy to Kubernetes') {
             steps {
-                script {
-                    sh 'echo "Running tests..."'
-                    sh 'docker run --rm $DOCKER_IMAGE pytest tests/'
-                }
-            }
-        }
-        stage('Deploy') {
-            steps {
-                script {
-                    sh 'echo "Deploying application..."'
-                    sh 'docker-compose up -d'
-                }
+                sh 'kubectl apply -f deployment.yaml'
+                sh 'kubectl apply -f service.yaml'
             }
         }
     }
-} 
+}

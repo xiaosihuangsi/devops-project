@@ -1,20 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nginx-deployment
+  name: devops-app
 spec:
-  replicas: 2  # Run two Nginx instances
+  replicas: 2
   selector:
     matchLabels:
-      app: nginx
+      app: devops
   template:
     metadata:
       labels:
-        app: nginx
+        app: devops
     spec:
       containers:
-      - name: nginx
-        image: nginx:latest
+      - name: devops-app
+        image: my-app:latest
         ports:
-        - containerPort: 80
-
+        - containerPort: 3000
