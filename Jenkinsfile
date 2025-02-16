@@ -1,5 +1,8 @@
 pipeline {
     agent any
+    environment {
+        DOCKER_IMAGE = "my-app"
+    }
     stages {
         stage('Checkout') {
             steps {
@@ -8,19 +11,27 @@ pipeline {
         }
         stage('Build') {
             steps {
-                echo 'Building the project...'
+                script {
+                    sh 'echo "Building the project..."'
+                    sh 'docker build -t $DOCKER_IMAGE .'
+                }
             }
         }
         stage('Test') {
             steps {
-                echo 'Running tests...'
+                script {
+                    sh 'echo "Running tests..."'
+                    sh 'docker run --rm $DOCKER_IMAGE pytest tests/'
+                }
             }
         }
         stage('Deploy') {
             steps {
-                echo 'Deploying application...'
+                script {
+                    sh 'echo "Deploying application..."'
+                    sh 'docker-compose up -d'
+                }
             }
         }
     }
-}
-
+} 
