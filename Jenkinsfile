@@ -7,37 +7,33 @@ pipeline {
     }
 
     stages {
-        stage('Checkout Code') {
+        stage('Build') {
             steps {
-                git branch: 'main', url: 'https://github.com/xiaosihuangsi/devops-project.git' 
+                echo "Building..."
+                sh 'docker build -t $IMAGE_NAME:$IMAGE_TAG .'
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Test') {
             steps {
-                script {
-                    sh 'docker build -t $IMAGE_NAME:$IMAGE_TAG .'
-                }
+                echo "Testing..."
             }
         }
 
         stage('Push to Docker Hub') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
                 script {
-                   sh 'echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin'
-                   sh 'docker push $IMAGE_NAME:$IMAGE_TAG'
+                    docker.withRegistry('https://index.docker.io/v1/', 'docker-hub-credentials') {
+                        sh 'docker push $IMAGE_NAME:$IMAGE_TAG'
+                    }
+                }
             }
         }
-    }
-}
 
-
-        stage('Deploy to Kubernetes') {
+        stage('Deploy') {
             steps {
-                script {
-                    sh 'kubectl set image deployment/devops-app devops-app=$IMAGE_NAME:$IMAGE_TAG'
-                }
+                echo "Deploying..."
+                sh 'kubectl set image deployment/devops-app devops-app=$IMAGE_NAME:$IMAGE_TAG'
             }
         }
     }
